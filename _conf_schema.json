@@ -1,0 +1,71 @@
+{
+  "proxy": {
+    "type": "string",
+    "description": "HTTP 代理地址",
+    "hint": "访问 Apple Music/Spotify/YouTube 的代理，如 http://127.0.0.1:7890。留空则不使用代理。",
+    "default": ""
+  },
+  "download_dir": {
+    "type": "string",
+    "description": "下载目录",
+    "hint": "临时音频文件存放目录（相对于 AstrBot data 目录）",
+    "default": "data/music"
+  },
+  "audio_format": {
+    "type": "string",
+    "description": "音频格式",
+    "hint": "下载后的音频文件格式",
+    "default": "mp3",
+    "options": ["mp3", "m4a", "opus"]
+  },
+  "audio_quality": {
+    "type": "int",
+    "description": "音频质量 (kbps)",
+    "hint": "推荐 192kbps，平衡音质和文件大小",
+    "default": 192,
+    "slider": {
+      "min": 64,
+      "max": 320,
+      "step": 32
+    }
+  },
+  "max_file_size_mb": {
+    "type": "int",
+    "description": "最大文件大小 (MB)",
+    "hint": "超过此大小的音频文件不会被发送",
+    "default": 50,
+    "slider": {
+      "min": 10,
+      "max": 100,
+      "step": 5
+    }
+  },
+  "search_timeout": {
+    "type": "int",
+    "description": "搜索超时 (秒)",
+    "hint": "YouTube 搜索下载的超时时间",
+    "default": 30,
+    "slider": {
+      "min": 10,
+      "max": 120,
+      "step": 5
+    }
+  },
+  "send_mode": {
+    "type": "string",
+    "description": "识别后发送方式",
+    "hint": "识别 Apple Music / Spotify 链接并下载后，发送语音消息还是音频文件，或者同时发送。",
+    "default": "both",
+    "options": [
+      {"label": "语音", "value": "record"},
+      {"label": "文件", "value": "file"},
+      {"label": "都发送", "value": "both"}
+    ]
+  },
+  "enabled_groups": {
+    "type": "list",
+    "description": "启用的群组",
+    "hint": "仅在指定群组生效，留空则所有群组生效。填写群号，多个用逗号分隔",
+    "default": []
+  }
+}
