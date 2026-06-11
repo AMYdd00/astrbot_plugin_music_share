@@ -146,10 +146,10 @@ class MusicSharePlugin(Star):
 
         try:
             mode = self.config_helper.send_mode()
-            if mode in ("record", "both"):
+            if mode in ("仅语音", "都发送"):
                 record = Record.fromFileSystem(str(audio_file))
                 yield event.set_result(event.chain_result([record]))
-            if mode in ("file", "both"):
+            if mode in ("仅文件", "都发送"):
                 file_b64 = file_to_base64(str(audio_file))
                 file_component = File(name=audio_file.name, url=file_b64)
                 yield event.set_result(event.chain_result([file_component]))

@@ -55,12 +55,8 @@
     "type": "string",
     "description": "识别后发送方式",
     "hint": "识别 Apple Music / Spotify 链接并下载后，发送语音消息还是音频文件，或者同时发送。",
-    "default": "both",
-    "options": [
-      {"label": "语音", "value": "record"},
-      {"label": "文件", "value": "file"},
-      {"label": "都发送", "value": "both"}
-    ]
+    "default": "都发送",
+    "options": ["仅语音", "仅文件", "都发送"]
   },
   "enabled_groups": {
     "type": "list",

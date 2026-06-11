@@ -38,7 +38,7 @@ class ConfigHelper:
 
     # ---- send mode ----
     def send_mode(self) -> str:
-        return str(self._cfg("send_mode", "both")).strip()
+        return str(self._cfg("send_mode", "都发送")).strip()
 
     # ---- groups ----
     def enabled_groups(self) -> list[str]:
