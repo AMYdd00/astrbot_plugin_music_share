@@ -75,10 +75,11 @@ _ROUTES: list[tuple[re.Pattern, Platform]] = [
         ),
         Platform.SOUNDCLOUD,
     ),
-    # 网易云音乐
+    # 网易云音乐 (包括 163cn.tv 短链接)
     (
         re.compile(
-            r"https?://music\.163\.com/(?:#/)?(?:song|album|playlist)\?id=\d+",
+            r"https?://music\.163\.com/(?:#/)?(?:song|album|playlist)\?id=\d+"
+            r"|https?://(?:www\.)?163cn\.tv/[a-zA-Z0-9]+",
             re.IGNORECASE,
         ),
         Platform.NETEASE,
