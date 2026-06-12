@@ -164,9 +164,9 @@ _TITLE_CLEANERS = [
 
 
 async def parse_html_title(url: str, proxy: str = "") -> Optional[dict]:
-    """Fetch a music platform page and extract title/artist from <title>.
+    """Fetch a music platform page and extract title/artist/cover from HTML.
 
-    Returns dict with keys: title, artist (best effort), or None on failure.
+    Returns dict with keys: title, artist, cover_url, or None on failure.
     """
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
@@ -197,6 +197,12 @@ async def parse_html_title(url: str, proxy: str = "") -> Optional[dict]:
     if not raw:
         return None
 
+    # 1b. Extract cover image from og:image
+    cover_url = ""
+    og_image = soup.find("meta", property="og:image")
+    if og_image and og_image.get("content"):
+        cover_url = str(og_image["content"]).strip()
+
     # 2. Clean platform suffixes
     clean = raw
     for regex, replacement in _TITLE_CLEANERS:
@@ -206,7 +212,11 @@ async def parse_html_title(url: str, proxy: str = "") -> Optional[dict]:
 
     # 3. Split into song / artist
     song_name, artist = _split_title(clean)
-    return {"title": song_name or clean, "artist": artist or ""}
+    return {
+        "title": song_name or clean,
+        "artist": artist or "",
+        "cover_url": cover_url,
+    }
 
 
 def _split_title(raw: str) -> Tuple[Optional[str], Optional[str]]:

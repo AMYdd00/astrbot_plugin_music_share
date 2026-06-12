@@ -132,6 +132,7 @@ class MusicSharePlugin(Star):
                 return SongInfo(
                     title=data["title"],
                     artist=data.get("artist", ""),
+                    cover_url=data.get("cover_url", ""),
                     source=platform.name.lower(),
                 )
             return None
