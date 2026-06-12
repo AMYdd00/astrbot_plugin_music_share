@@ -36,6 +36,9 @@ class ConfigHelper:
     def search_timeout(self) -> int:
         return int(self._cfg("search_timeout", 30))
 
+    def match_threshold(self) -> int:
+        return int(self._cfg("match_threshold", 99))
+
     # ---- send mode ----
     def send_mode(self) -> str:
         return str(self._cfg("send_mode", "都发送")).strip()

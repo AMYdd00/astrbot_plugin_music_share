@@ -51,6 +51,17 @@
       "step": 5
     }
   },
+  "match_threshold": {
+    "type": "int",
+    "description": "时长匹配精度 (%)",
+    "hint": "候选音频与原始歌曲时长的匹配精度，建议 99%。偏低容易下错歌，偏高可能搜不到。",
+    "default": 99,
+    "slider": {
+      "min": 85,
+      "max": 100,
+      "step": 1
+    }
+  },
   "send_mode": {
     "type": "string",
     "description": "识别后发送方式",

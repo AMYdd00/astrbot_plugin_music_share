@@ -2,10 +2,13 @@
 Single unified frosted-glass background for consistent look across all platforms."""
 
 import io
+import logging
 from pathlib import Path
 
 import aiohttp
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
+
+logger = logging.getLogger(__name__)
 
 
 # ── Layout ───────────────────────────────────────────────────────────
@@ -41,19 +44,143 @@ BADGE_TEXT   = "white"
 
 # ── Font loader ──────────────────────────────────────────────────────
 
-def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
-    """Load wqy-zenhei (CJK + Latin).  Fall back to DejaVu if unavailable."""
-    paths = [
-        "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    ]
-    for fp in paths:
-        if Path(fp).exists():
+_FONT_CACHE = {}
+_PLUGIN_DIR = Path(__file__).parent
+
+# Noto Sans SC static-weight fonts – free, high-quality CJK + Latin with excellent kerning
+# Source: Google Fonts / OFL licensed
+# Using static builds to avoid Pillow rendering at hairline weight (variable [wght] default)
+_NOTOSANS_FONTS: list[tuple[str, str]] = [
+    ("NotoSansSC-Regular.otf",
+     "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf"),
+    ("NotoSansSC-Bold.otf",
+     "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Bold.otf"),
+]
+
+
+async def _ensure_bundled_font(proxy: str = "") -> bool:
+    """Ensure all bundled fonts exist; download Noto Sans SC static weights if missing.
+
+    Returns True if all required font files are available.
+    """
+    fonts_dir = _PLUGIN_DIR / "fonts"
+    fonts_dir.mkdir(parents=True, exist_ok=True)
+
+    all_ok = True
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    }
+    async with aiohttp.ClientSession() as session:
+        for filename, url in _NOTOSANS_FONTS:
+            dest = fonts_dir / filename
+            if dest.exists():
+                continue
+            logger.info(f"[AnyMusic] Downloading font {filename} ...")
             try:
-                return ImageFont.truetype(fp, size)
+                kwargs = {"headers": headers, "timeout": aiohttp.ClientTimeout(total=30)}
+                if proxy:
+                    kwargs["proxy"] = proxy
+                async with session.get(url, **kwargs) as resp:
+                    if resp.status == 200:
+                        data = await resp.read()
+                        dest.write_bytes(data)
+                        logger.info(f"[AnyMusic] Font downloaded: {dest} ({len(data)} bytes)")
+                    else:
+                        logger.warning(f"[AnyMusic] Font {filename} download failed (HTTP {resp.status})")
+                        all_ok = False
+            except Exception as e:
+                logger.warning(f"[AnyMusic] Font {filename} download error: {e}")
+                all_ok = False
+
+    return all_ok
+
+
+def _find_system_fonts() -> list[str]:
+    """Return a list of candidate font file paths on the current platform."""
+    import platform
+
+    candidates = []
+
+    system = platform.system()
+    if system == "Windows":
+        windir = Path("C:/Windows/Fonts")
+        if windir.exists():
+            candidates.extend([
+                str(windir / "msyh.ttc"),           # Microsoft YaHei
+                str(windir / "msyhbd.ttc"),         # Microsoft YaHei Bold
+                str(windir / "simsun.ttc"),         # SimSun
+                str(windir / "arial.ttf"),
+                str(windir / "segoeui.ttf"),
+                str(windir / "seguiemj.ttf"),
+            ])
+    elif system == "Darwin":  # macOS
+        candidates.extend([
+            "/System/Library/Fonts/PingFang.ttc",
+            "/System/Library/Fonts/Helvetica.ttc",
+            "/System/Library/Fonts/STHeiti Light.ttc",
+            str(Path.home() / "Library/Fonts/NotoSansCJKsc-Regular.otf"),
+        ])
+    else:  # Linux / other
+        candidates.extend([
+            "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/TTF/DejaVuSans.ttf",
+            "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+        ])
+
+    return candidates
+
+
+def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
+    """Load a CJK + Latin capable font, searching system paths and bundled fonts.
+
+    Caches loaded fonts by (size, bold) to avoid repeated filesystem I/O.
+    """
+    cache_key = (size, bold)
+    if cache_key in _FONT_CACHE:
+        return _FONT_CACHE[cache_key]
+
+    # 1. Try bundled fonts inside the plugin directory
+    bundled_dir = _PLUGIN_DIR / "fonts"
+    if bundled_dir.is_dir():
+        # Prefer the correctly matched weight file (Bold / Regular)
+        preferred_name = "NotoSansSC-Bold.otf" if bold else "NotoSansSC-Regular.otf"
+        preferred = bundled_dir / preferred_name
+        if preferred.exists():
+            try:
+                font = ImageFont.truetype(str(preferred), size)
+                _FONT_CACHE[cache_key] = font
+                return font
             except Exception:
                 pass
-    return ImageFont.load_default()
+        # Fallback: any font file in the directory
+        for fp in bundled_dir.iterdir():
+            if fp.suffix.lower() in (".ttf", ".otf", ".ttc"):
+                try:
+                    font = ImageFont.truetype(str(fp), size)
+                    _FONT_CACHE[cache_key] = font
+                    return font
+                except Exception:
+                    pass
+
+    # 2. Try system fonts
+    system_paths = _find_system_fonts()
+    for fp in system_paths:
+        if Path(fp).exists():
+            try:
+                font = ImageFont.truetype(fp, size)
+                _FONT_CACHE[cache_key] = font
+                return font
+            except Exception:
+                pass
+
+    # 3. Final fallback: PIL default (low quality, Latin-only)
+    font = ImageFont.load_default()
+    _FONT_CACHE[cache_key] = font
+    return font
 
 
 def _auto_crop_cover(im: Image.Image) -> Image.Image:
@@ -106,6 +233,9 @@ async def make_info_card(
     release_date: str = "",
 ) -> Image.Image:
     """Create a music card — unified frosted-glass background."""
+
+    # Ensure bundled font is available before rendering text
+    await _ensure_bundled_font(proxy)
 
     card = Image.new("RGBA", (CARD_W, CARD_H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(card)
