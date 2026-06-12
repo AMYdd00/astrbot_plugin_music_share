@@ -1,9 +1,9 @@
 name: "astrbot_plugin_anymusic"
 display_name: AnyMusic
-author: "user"
-desc: "自动识别 Apple Music / Spotify 分享链接，通过 YouTube 搜索匹配下载音频文件并发送。支持国区/外区 Apple Music。"
-short_desc: "Apple Music / Spotify 链接解析 & 点歌"
-version: "1.0.0"
+author: "AMYdd00"
+desc: "自动识别 10 大主流音乐平台分享链接，生成磨砂玻璃信息卡片，双引擎竞争下载高质量音频。"
+short_desc: "全平台音乐链接解析 & 双引擎竞争下载"
+version: "2.0.0"
 
 repo: "https://github.com/AMYdd00/astrbot_plugin_anymusic"
 support_platforms:

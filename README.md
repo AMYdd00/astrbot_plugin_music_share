@@ -1,32 +1,59 @@
 # AnyMusic
 
-AstrBot 音乐插件 —— 自动识别群聊中 10 大主流音乐平台分享链接，生成信息卡片，双引擎竞争下载高质量音频。
+[![AstrBot](https://img.shields.io/badge/AstrBot-Plugin-blue)](https://github.com/AstrBotDevs/AstrBot)
+[![License](https://img.shields.io/badge/License-AGPLv3-green)](LICENSE)
+[![Version](https://img.shields.io/badge/version-2.0.0-blueviolet)](CHANGELOG.md)
 
-> 原名 `astrbot_plugin_music_share`，现已更名为 **astrbot_plugin_anymusic**。
+## 简介
 
-## 功能
+AstrBot 全平台音乐插件。自动识别群聊中 10 大主流音乐平台分享链接，生成磨砂玻璃风格信息卡片，通过 yt-dlp + spotdl 双引擎竞争匹配下载高质量音频并发送语音/文件。
 
-- **自动识别链接** —— 支持 10 个平台：Spotify / Apple Music / YouTube / SoundCloud / 网易云 / QQ 音乐 / 酷狗 / 酷我 / 咪咕 / Bilibili 音频
-- **信息卡片** —— 磨砂玻璃风格卡片，展示专辑封面 + 歌曲信息 + 来源徽章
-- **双引擎竞争下载** —— yt-dlp + spotdl 并行搜索，通过时长匹配 + 标题相似度 + 负面关键词过滤选出最优音源
-- **时长精确匹配** —— 解析原始歌曲时长，候选偏差超过阈值自动拒绝（默认 99% 精度可配置）
-- **语音消息** —— 发送 QQ 语音可直接点击播放
-- **可下载文件** —— 同步发送音频文件
-- **LLM 点歌** —— 说「我想听夜曲」「放一首晴天」，Bot 自动搜索下载
-- **灵活发送模式** —— 可选择仅发语音 / 仅发文件 / 同时发送
-- **跨平台兼容** —— 不支持语音的平台自动回退到文件发送
-- **跨平台字体** —— 自动下载 Noto Sans SC 字体，Windows/Linux/macOS 均完美渲染中英文
-- **异步非阻塞** —— 搜索下载不阻塞 Bot 主循环
-- **内存缓存** —— 同一链接 10 分钟内复用解析结果
-- **自动清理** —— 发送完成后立即删除临时文件
+> 原名 `astrbot_plugin_music_share`，v2.0 重构后更名为 **astrbot_plugin_anymusic**。
+
+## 功能特点
+
+### 支持的平台
+
+| 平台 | 解析方式 |
+|------|---------|
+| Spotify | oEmbed API + HTML meta + JSON-LD |
+| Apple Music | HTML `<title>` + JSON-LD |
+| YouTube / YouTube Music | yt-dlp `--dump-json` |
+| SoundCloud | yt-dlp `--dump-json` |
+| Bilibili 音频 (`/audio/au\d+`) | yt-dlp `--dump-json` |
+| 网易云音乐 | HTML `<title>` 通用解析 |
+| QQ 音乐 | HTML `<title>` 通用解析 |
+| 酷狗音乐 | HTML `<title>` 通用解析 |
+| 酷我音乐 | HTML `<title>` 通用解析 |
+| 咪咕音乐 | HTML `<title>` 通用解析 |
+
+> Bilibili 仅识别纯音频链接 (`/audio/au\d+`)，不会拦截普通视频 (`/video/`)。
+
+### 核心特性
+
+- ✅ **双引擎竞争下载** — yt-dlp + spotdl 并行搜索，通过多维评分选出最优音源
+- ✅ **时长精确匹配** — 解析原始歌曲时长，候选偏差超过阈值自动拒绝（默认 99% 精度可配置）
+- ✅ **多维评分系统** — 时长匹配 40% + 标题相似度 40% + 来源加分 20% + 负面关键词过滤
+- ✅ **信息卡片** — 磨砂玻璃深色风格卡片，展示专辑封面 + 歌曲信息 + 来源徽章
+- ✅ **跨平台字体** — 自动下载 Noto Sans SC 字体，Windows/Linux/macOS 均完美渲染中英文
+- ✅ **LLM 点歌** — 说「我想听夜曲」「放一首晴天」，Bot 自动搜索下载
+- ✅ **语音 + 文件双发送** — 独立配置仅语音 / 仅文件 / 同时发送
+- ✅ **跨平台兼容** — 不支持语音的平台自动回退到文件发送
+- ✅ **异步非阻塞** — 解析和下载均为异步，不阻塞 Bot 主循环
+- ✅ **内存缓存** — 同一链接 10 分钟内复用解析结果
+- ✅ **自动清理** — 发送完成后立即删除临时音频文件
+- ✅ **多平台兼容** — 支持 aiocqhttp / telegram / discord / lark / qq_official / dingtalk / kook / slack / mattermost / satori
 
 ## 安装
 
-### 方式一：WebUI 安装（推荐）
+### 方法一：插件市场安装
 
-在 AstrBot WebUI 插件市场中搜索 `AnyMusic` 安装。
+1. 打开 AstrBot WebUI 管理面板
+2. 进入「插件市场」
+3. 搜索 `astrbot_plugin_anymusic` 或 `AnyMusic`
+4. 点击安装
 
-### 方式二：手动安装
+### 方法二：手动安装
 
 ```bash
 cd AstrBot/data/plugins
@@ -44,44 +71,43 @@ pip install -r astrbot_plugin_anymusic/requirements.txt
 | `beautifulsoup4` | HTML 解析（Apple Music / 国内平台） |
 | `aiohttp` | 异步 HTTP 请求 |
 | `Pillow` | 信息卡片图片生成 |
-| `rapidfuzz` | 标题模糊匹配（spotdl 已附带） |
 
 ```bash
 pip install yt-dlp spotdl beautifulsoup4 aiohttp Pillow
 ```
 
-## 配置
+## 配置说明
 
-在 AstrBot WebUI → 插件管理 → AnyMusic → 配置：
+在 AstrBot WebUI -- 插件管理 -- AnyMusic -- 配置：
 
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `proxy` | 空 | HTTP 代理地址（如 `http://127.0.0.1:7890`） |
-| `download_dir` | `data/music` | 临时下载目录 |
-| `audio_format` | `mp3` | 音频格式 (mp3 / m4a / opus) |
-| `audio_quality` | 192 | 音频质量 (kbps) |
-| `max_file_size_mb` | 50 | 最大文件大小限制 (MB) |
-| `search_timeout` | 30 | 搜索超时 (秒) |
-| `match_threshold` | 99 | 时长匹配精度 (%), 99 表示允许 ±1% 偏差 |
-| `send_mode` | 都发送 | 识别后发送方式：语音 / 文件 / 都发送 |
-| `enabled_groups` | [] | 启用的群组列表，留空则所有群组生效 |
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `proxy` | string | 空 | HTTP 代理地址，如 `http://127.0.0.1:7890` |
+| `download_dir` | string | `data/music` | 临时下载目录 |
+| `audio_format` | string | `mp3` | 音频格式 (mp3 / m4a / opus) |
+| `audio_quality` | int | `192` | 音频质量 (kbps)，64~320 |
+| `max_file_size_mb` | int | `50` | 最大文件大小限制 (MB) |
+| `search_timeout` | int | `30` | 搜索超时 (秒) |
+| `match_threshold` | int | `99` | 时长匹配精度 (%), 99 表示允许 +-1% 偏差 |
+| `send_mode` | string | `都发送` | 发送方式：仅语音 / 仅文件 / 都发送 |
+| `enabled_groups` | list | `[]` | 启用的群组，留空则所有群组生效 |
 
-## 支持的平台与解析方式
+## 使用
 
-| 平台 | 解析方式 | 下载方式 |
-|------|---------|---------|
-| Spotify | oEmbed API + HTML meta + JSON-LD | 双引擎竞争 |
-| Apple Music | HTML `<title>` + JSON-LD | 双引擎竞争 |
-| YouTube / YouTube Music | yt-dlp `--dump-json` | 双引擎竞争 |
-| SoundCloud | yt-dlp `--dump-json` | 双引擎竞争 |
-| Bilibili 音频 (`/audio/au`) | yt-dlp `--dump-json` | 双引擎竞争 |
-| 网易云音乐 | HTML `<title>` 解析 | 双引擎竞争 |
-| QQ 音乐 | HTML `<title>` 解析 | 双引擎竞争 |
-| 酷狗音乐 | HTML `<title>` 解析 | 双引擎竞争 |
-| 酷我音乐 | HTML `<title>` 解析 | 双引擎竞争 |
-| 咪咕音乐 | HTML `<title>` 解析 | 双引擎竞争 |
+1. 在 AstrBot 管理面板中启用插件
+2. 在群聊中分享任意支持平台的音乐链接，Bot 自动解析并下载
+3. 也可以直接对 Bot 说「放一首周杰伦晴天」，Bot 会搜索下载
 
-> 注意：Bilibili 仅识别纯音频链接 (`/audio/au\d+`)，不会拦截普通视频 (`/video/`)。
+### 首次使用
+
+插件首次生成信息卡片时会自动从 GitHub 下载 Noto Sans SC 字体（约 30MB）存储到 `plugins/astrbot_plugin_anymusic/fonts/` 目录。此过程仅执行一次，后续即时可用。
+
+### 匹配精度说明
+
+`match_threshold` 控制时长匹配的严格程度：
+- `100` = 仅接受精确匹配（可能搜不到）
+- `99` = 允许 +-1% 偏差（推荐，平衡精度与召回）
+- `90` = 允许 +-10% 偏差（宽松，可能误匹配 remix/版本变体）
 
 ## 工作原理
 
@@ -114,25 +140,32 @@ pip install yt-dlp spotdl beautifulsoup4 aiohttp Pillow
 按 send_mode 发送语音/文件 → 清理临时文件
 ```
 
+## 技术细节
+
+- **正则路由表**：`utils.py` 中维护 10 个平台的正则匹配规则，按优先级排序
+- **双引擎并行**：使用 `asyncio.gather` 同时发起 yt-dlp 和 spotdl 元数据搜索
+- **多维评分**：引入 `rapidfuzz` 对候选标题与原歌名做模糊匹配，过滤 `instrumental / karaoke / cover / remix / live` 等非原曲变体
+- **spotdl ISRC 匹配**：通过 Spotify 元数据提取 ISRC 码，在 YouTube Music 官方音轨库中精确匹配
+- **HTML 标题解析**：国内平台无结构化 API，统一解析 `<title>` 并自动去除平台后缀（如 "- 网易云音乐"）
+- **录制回退**：不支持 Record 消息的平台自动降级为 File 发送
+
 ## 常见问题
 
-### Q: 为什么不直接从 Apple Music / Spotify 下载？
+**Q: 为什么下载到纯音乐 / 伴奏 / 翻唱？**
+
+多维评分系统会自动过滤带有 `instrumental / karaoke / cover / remix` 等关键词的候选。如果仍出现误匹配，可调高 `match_threshold`（如 100）。
+
+**Q: 为什么不直接从 Apple Music / Spotify 下载？**
 
 Apple Music 有 DRM 加密保护，Spotify 需要 Premium 账户。本插件通过 ISRC 匹配 YouTube Music 官方音轨，绝大多数情况能下载到原曲录音室版本。
 
-### Q: 为什么下载到纯音乐 / 伴奏 / 翻唱？
-
-多维评分系统会自动过滤带有 `instrumental / karaoke / cover / remix` 等关键词的候选，并优先选择标题相似度高的结果。如果仍出现误匹配，可调高 `match_threshold`（如 100）。
-
-### Q: 国区 Apple Music 链接能识别吗？
+**Q: 国区 Apple Music 链接能识别吗？**
 
 能。支持 `music.apple.com/cn/`、`/us/`、`/jp/` 等所有区域。
 
-### Q: 为什么显示「无法识别该音乐链接」或「未找到匹配的歌曲」？
+**Q: 为什么显示「无法识别该音乐链接」或「未找到匹配的歌曲」？**
 
-- 链接格式不被正则路由表匹配（检查是否支持该平台）
-- 解析元数据时网络超时（检查代理设置）
-- 候选音源时长偏差超过 `match_threshold` 阈值（可适当降低阈值）
+可能原因：链接格式不被正则路由表匹配；解析元数据时网络超时（检查代理设置）；候选音源时长偏差超过 `match_threshold` 阈值（可适当降低阈值）。
 
 ## 文件结构
 
@@ -154,7 +187,17 @@ astrbot_plugin_anymusic/
     └── spotify.py              # Spotify 精解析器
 ```
 
-## 链接
+## 更新日志
 
-- GitHub: https://github.com/AMYdd00/astrbot_plugin_anymusic
-- AstrBot: https://github.com/AstrBotDevs/AstrBot
+详见 [CHANGELOG.md](CHANGELOG.md)
+
+## 作者
+
+- [AMYdd00](https://github.com/AMYdd00)
+
+> 本插件代码完全由 AI 生成。
+
+## 相关链接
+
+- [AstrBot](https://github.com/AstrBotDevs/AstrBot) - 一个易于上手的多平台 LLM 对话机器人框架
+- [QQ 群](https://qm.qq.com/q/cOrzqdkW7m) - 欢迎提交 Issue 和加群反馈
