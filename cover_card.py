@@ -80,9 +80,14 @@ async def download_cover(cover_url: str, proxy: str = "") -> Image.Image:
 
 
 def _round_corners(im: Image.Image, r: int) -> Image.Image:
-    mask = Image.new("L", im.size, 0)
+    """Round corners with 2x supersampling for smooth anti-aliased edges."""
+    scale = 2
+    w, h = im.size
+    big = (w * scale, h * scale)
+    mask = Image.new("L", big, 0)
     draw = ImageDraw.Draw(mask)
-    draw.rounded_rectangle((0, 0, *im.size), r, fill=255)
+    draw.rounded_rectangle((0, 0, *big), r * scale, fill=255)
+    mask = mask.resize(im.size, Image.LANCZOS)
     result = Image.new("RGBA", im.size)
     result.paste(im, mask=mask)
     return result
@@ -156,8 +161,8 @@ async def make_info_card(
          badge_x + badge_text_w + badge_pad, y + badge_h),
         BADGE_R, fill=ACCENT_COLOR,
     )
-    # Vertical center: shift up by 1 px for visual balance (Latin on CJK font)
-    text_y = y + (badge_h - badge_text_h) // 2 - 1
+    # Vertical center: shift up a bit more — wqy-zenhei Latin baseline sits low
+    text_y = y + (badge_h - badge_text_h) // 2 - 3
     draw.text((badge_x, text_y), badge_text, font=font_badge, fill=BADGE_TEXT)
     y += badge_h + gap_big
 
