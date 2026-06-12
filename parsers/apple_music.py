@@ -35,7 +35,18 @@ AM_URL_RE = re.compile(
 )
 
 TITLE_PATTERNS = [
+    # Chinese (zh-cn store): "《Song - Single》 Artist的专辑 on Apple Music"
+    # Must come before generic dash patterns to avoid splitting on dashes inside 《》
+    re.compile(
+        r"^《(.+?)》\s*(.+?)\s+on\s+Apple\s+Music\s*$", re.IGNORECASE
+    ),
+    # English: "Song by Artist on Apple Music"
     re.compile(r"^(.+?)\s+by\s+(.+?)\s+on\s+Apple\s+Music\s*$", re.IGNORECASE),
+    # Chinese alt: "Song - Single, Artist on Apple Music"
+    re.compile(
+        r"^(.+?),\s*(.+?)\s+on\s+Apple\s+Music\s*$", re.IGNORECASE
+    ),
+    # Generic dash separators (English + fallback)
     re.compile(r"^(.+?)\s*-\s*(.+?)\s+on\s+Apple\s+Music\s*$", re.IGNORECASE),
     re.compile(r"^(.+?)\s*[—–]\s*(.+?)\s+on\s+Apple\s+Music\s*$", re.IGNORECASE),
 ]
@@ -103,6 +114,9 @@ class AppleMusicParser:
             r"\s*(?:on\s+)?Apple\s+Music\s*$", "", title, flags=re.IGNORECASE
         ).strip()
 
+        # Remove 《》 brackets if present
+        cleaned = re.sub(r"^《(.+?)》\s*", r"\1", cleaned)
+
         for sep in (" - ", " – ", " — "):
             if sep in cleaned:
                 parts = cleaned.split(sep, 1)
@@ -113,13 +127,21 @@ class AppleMusicParser:
 
     @staticmethod
     def _clean_artist(artist: str) -> str:
+        # Remove trailing dashes
         artist = re.sub(r"\s*[-—–]\s*$", "", artist).strip()
+        # Remove " - Single" / "- Single" suffix from songs in Chinese store
+        artist = re.sub(r"\s*[-—–]\s*Single\s*$", "", artist, flags=re.IGNORECASE).strip()
+        # Chinese: "的专辑" / "的单曲" / "的EP" suffix
+        artist = re.sub(r"\s*的(?:专辑|单曲|EP|唱片)\s*$", "", artist).strip()
+        # Chinese: "由 XXX 演唱"
         m = re.match(r"^由\s*(.+?)\s*演唱\s*$", artist)
         if m:
             return m.group(1).strip()
+        # Chinese: "XXX 演唱"
         m = re.match(r"^(.+?)\s*演唱\s*$", artist)
         if m:
             return m.group(1).strip()
+        # Chinese: "由 XXX"
         m = re.match(r"^由\s*(.+?)\s*$", artist)
         if m:
             return m.group(1).strip()
