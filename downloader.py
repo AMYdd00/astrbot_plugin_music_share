@@ -186,8 +186,6 @@ class MusicDownloader:
             python_exe, "-m", "spotdl",
             "save", query,
             "--save-file", "-",
-            "--format", self.config.audio_format(),
-            "--bitrate", str(self.config.audio_quality()),
         ]
         proxy = self.config.proxy()
         if proxy:
