@@ -126,6 +126,7 @@ class MusicSharePlugin(Star):
         if platform in (
             Platform.NETEASE, Platform.QQ_MUSIC,
             Platform.KUGOU, Platform.KUWO, Platform.MIGU,
+            Platform.QISHUI,
         ):
             data = await parse_html_title(url, proxy)
             if data:

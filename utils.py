@@ -24,6 +24,7 @@ class Platform(Enum):
     KUGOU = auto()
     KUWO = auto()
     MIGU = auto()
+    QISHUI = auto()
 
 
 # ── Unified routing table ────────────────────────────────────────────
@@ -117,6 +118,15 @@ _ROUTES: list[tuple[re.Pattern, Platform]] = [
             re.IGNORECASE,
         ),
         Platform.MIGU,
+    ),
+    # 汽水音乐 (抖音旗下)
+    (
+        re.compile(
+            r"https?://(?:[a-zA-Z0-9]+\.)?qishui\.douyin\.com/.*"
+            r"|https?://(?:www\.)?qishuiyinyue\.com/.*",
+            re.IGNORECASE,
+        ),
+        Platform.QISHUI,
     ),
 ]
 
